@@ -1,15 +1,12 @@
 package Classes;
 
-import Data.saveLoadFunction;
-
 import javax.sound.sampled.*;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
 import java.util.Scanner;
-import java.math.*;
-
-import static java.util.Collections.min;
 
 public class Ingame {
 
@@ -19,12 +16,13 @@ public class Ingame {
     public static final String ANSI_GREEN = "\u001B[32m";
     public static final String ANSI_CYAN = "\u001B[36m";
     public static final String ANSI_PURPLE = "\u001B[35m";
-    public void playWithPlayer(Board Player1, Board Player2, Clip bgMusic, Clip choosingSound, Scanner sc) throws IOException, UnsupportedAudioFileException, LineUnavailableException {
-        //End Sound
-        AudioInputStream endingSound = AudioSystem.getAudioInputStream(new File("src/Audio/WinningMusic.wav"));
-        Clip endSound = AudioSystem.getClip();
-        endSound.open(endingSound);
 
+    public Ingame() throws UnsupportedAudioFileException, LineUnavailableException, IOException {
+    }
+
+    public void playWithPlayer(Board Player1, Board Player2, Settings settings, Scanner sc) throws IOException, UnsupportedAudioFileException, LineUnavailableException {
+
+        if(settings.musicOn) settings.ingameMusic.loop(Clip.LOOP_CONTINUOUSLY);
         while(true)
         {
             if(Player1.playerTurn == 1) System.out.println("It's " + ANSI_RED + Player1.playerName + ANSI_RESET + " turn!");
@@ -33,9 +31,9 @@ public class Ingame {
             System.out.println("2.Attack opponent");
             System.out.println("3.Save and exit to menu");
             String option = sc.nextLine();
-            choosingSound.setMicrosecondPosition(0);
-            choosingSound.stop();
-            choosingSound.start();
+            settings.choosingSound.setMicrosecondPosition(0);
+            settings.choosingSound.stop();
+            settings.choosingSound.start();
             switch (option){
                 case "1":
                     if(Player1.playerTurn == 1) Player1.show();
@@ -55,8 +53,8 @@ public class Ingame {
                         System.out.println();
                     }
 
-                    if(Player1.playerTurn == 1) attack(Player2, sc,choosingSound);
-                    else attack(Player1, sc, choosingSound);
+                    if(Player1.playerTurn == 1) attack(Player2,settings, sc);
+                    else attack(Player1, settings, sc);
                     Player1.playerTurn = 1 - Player1.playerTurn;
                     Player2.playerTurn = 1 - Player1.playerTurn;
                     break;
@@ -67,7 +65,7 @@ public class Ingame {
                     System.out.println("Press enter to continue:");
                     sc.nextLine();
                     for(int i = 0; i < 50; i++) System.out.println();
-                    bgMusic.stop();
+                    settings.menuMusic.stop();
                     return;
                 default:
                     System.out.println(ANSI_RED + "Invalid option" + ANSI_RESET);
@@ -76,9 +74,9 @@ public class Ingame {
           
             if(Player1.shipRemaining == 0 || Player2.shipRemaining == 0) //Điều kiện kết thúc trò chơi + cập nhật bảng xếp hạng
             {
-                bgMusic.stop();
-                endSound.setMicrosecondPosition(0);
-                endSound.start();
+                settings.menuMusic.stop();
+                settings.endSound.setMicrosecondPosition(0);
+                settings.endSound.start();
                 try {
                     File file = new File("src/Classes/leaderBoard.txt");
                     if (!file.exists()) file.createNewFile();
@@ -103,36 +101,33 @@ public class Ingame {
 
                 System.out.println("Press enter to show " + ANSI_RED + Player1.playerName + ANSI_RESET + " board:");
                 sc.nextLine();
-                choosingSound.setMicrosecondPosition(0);
-                choosingSound.stop();
-                choosingSound.start();
+                settings.choosingSound.setMicrosecondPosition(0);
+                settings.choosingSound.stop();
+                settings.choosingSound.start();
                 Player1.showFinalResult();
 
                 System.out.println("Press enter to show " + ANSI_YELLOW + Player2.playerName + ANSI_RESET + " board:");
                 sc.nextLine();
-                choosingSound.setMicrosecondPosition(0);
-                choosingSound.stop();
-                choosingSound.start();
+                settings.choosingSound.setMicrosecondPosition(0);
+                settings.choosingSound.stop();
+                settings.choosingSound.start();
                 Player2.showFinalResult();
 
                 System.out.println("Press enter to continue");
                 sc.nextLine();
-                choosingSound.setMicrosecondPosition(0);
-                choosingSound.stop();
-                choosingSound.start();
+                settings.choosingSound.setMicrosecondPosition(0);
+                settings.choosingSound.stop();
+                settings.choosingSound.start();
                 for(int i = 0; i < 50; i++) System.out.println();
-                endSound.stop();
+                settings.endSound.stop();
                 return;
             }
         }
     }
 
-    public void playWithBot(Board Player1, Board Player2, Clip bgMusic, Clip choosingSound, Scanner sc) throws IOException, UnsupportedAudioFileException, LineUnavailableException, InterruptedException {
-        //End Sound
-        AudioInputStream endingSound = AudioSystem.getAudioInputStream(new File("src/Audio/WinningMusic.wav"));
-        Clip endSound = AudioSystem.getClip();
-        endSound.open(endingSound);
+    public void playWithBot(Board Player1, Board Player2, Settings settings, Scanner sc) throws IOException, UnsupportedAudioFileException, LineUnavailableException, InterruptedException {
 
+        if(settings.musicOn) settings.ingameMusic.loop(Clip.LOOP_CONTINUOUSLY);
         while(true)
         {
             if(Player1.playerTurn == 1)
@@ -142,8 +137,8 @@ public class Ingame {
                 System.out.println("2.Attack opponent");
                 System.out.println("3.Save and exit to menu");
                 String option = sc.nextLine();
-                choosingSound.setMicrosecondPosition(0);
-                choosingSound.start();
+                settings.choosingSound.setMicrosecondPosition(0);
+                settings.choosingSound.start();
                 switch (option){
                     case "1":
                         Player1.show();
@@ -152,7 +147,7 @@ public class Ingame {
                         Player2.showForOpponent();
                         System.out.println("Your remaining ships: " + Player1.shipRemaining);
                         System.out.println();
-                        attack(Player2, sc,choosingSound);
+                        attack(Player2, settings, sc);
                         Player1.playerTurn = 1 - Player1.playerTurn;
                         Player2.playerTurn = 1 - Player1.playerTurn;
                         break;
@@ -163,7 +158,7 @@ public class Ingame {
                         System.out.println("Press enter to continue:");
                         sc.nextLine();
                         for(int i = 0; i < 50; i++) System.out.println();
-                        bgMusic.stop();
+                        settings.menuMusic.stop();
                         return;
                     default:
                         System.out.println(ANSI_RED + "Invalid option" + ANSI_RESET);
@@ -180,7 +175,7 @@ public class Ingame {
                     System.out.print(ANSI_YELLOW + chars[i] + ANSI_RESET);
                     Thread.sleep(50);
                 }
-                botAttack(sc, Player1, choosingSound);
+                botAttack(Player1, settings, sc);
                 Player1.playerTurn = 1;
                 Player2.playerTurn = 0;
             }
@@ -188,9 +183,12 @@ public class Ingame {
 
             if(Player1.shipRemaining == 0 || Player2.shipRemaining == 0) //Điều kiện kết thúc trò chơi + cập nhật bảng xếp hạng
             {
-                bgMusic.stop();
-                endSound.setMicrosecondPosition(0);
-                endSound.start();
+                settings.ingameMusic.stop();
+                if(settings.musicOn)
+                {
+                    settings.endSound.setMicrosecondPosition(0);
+                    settings.endSound.start();
+                }
                 try {
                     File file = new File("src/Classes/leaderBoard.txt");
                     if (!file.exists()) file.createNewFile();
@@ -211,75 +209,28 @@ public class Ingame {
 
                 System.out.println("Press enter to show " + ANSI_RED + Player1.playerName + ANSI_RESET + " board:");
                 sc.nextLine();
-                choosingSound.setMicrosecondPosition(0);
-                choosingSound.stop();
-                choosingSound.start();
+                settings.choosingSound.setMicrosecondPosition(0);
+                settings.choosingSound.start();
                 Player1.showFinalResult();
 
                 System.out.println("Press enter to show " + ANSI_YELLOW + Player2.playerName + ANSI_RESET + " board:");
                 sc.nextLine();
-                choosingSound.setMicrosecondPosition(0);
-                choosingSound.stop();
-                choosingSound.start();
+                settings.choosingSound.setMicrosecondPosition(0);
+                settings.choosingSound.start();
                 Player2.showFinalResult();
 
                 System.out.println("Press enter to continue");
                 sc.nextLine();
-                choosingSound.setMicrosecondPosition(0);
-                choosingSound.stop();
-                choosingSound.start();
+                settings.choosingSound.setMicrosecondPosition(0);
+                settings.choosingSound.start();
                 for(int i = 0; i < 50; i++) System.out.println();
-                endSound.stop();
+                settings.endSound.stop();
                 return;
             }
         }
     }
 
-    public void attack(Board Player, Scanner sc, Clip choosingSound) throws UnsupportedAudioFileException, IOException, LineUnavailableException {
-
-        //Hit sound
-        File sound = new File("src/Audio/Hit Sound.wav");
-        AudioInputStream inputStream = AudioSystem.getAudioInputStream(sound);
-        Clip hitSound = AudioSystem.getClip();
-        hitSound.open(inputStream);
-
-        //Miss sound
-        sound = new File("src/Audio/Miss Sound.wav");
-        inputStream = AudioSystem.getAudioInputStream(sound);
-        Clip missSound = AudioSystem.getClip();
-        missSound.open(inputStream);
-
-        //FirstBlood sound
-        sound = new File("src/Audio/FirstBlood.wav");
-        inputStream = AudioSystem.getAudioInputStream(sound);
-        Clip firstBlood = AudioSystem.getClip();
-        firstBlood.open(inputStream);
-
-        //DoubleKill sound
-        sound = new File("src/Audio/DoubleKill.wav");
-        inputStream = AudioSystem.getAudioInputStream(sound);
-        Clip doubleKill = AudioSystem.getClip();
-        doubleKill.open(inputStream);
-
-        //TripleKill sound
-        sound = new File("src/Audio/TripleKill.wav");
-        inputStream = AudioSystem.getAudioInputStream(sound);
-        Clip tripleKill = AudioSystem.getClip();
-        tripleKill.open(inputStream);
-
-        //QuadraKill sound
-        sound = new File("src/Audio/Quadra Kill - Sound Effect.wav");
-        inputStream = AudioSystem.getAudioInputStream(sound);
-        Clip quadraKill = AudioSystem.getClip();
-        quadraKill.open(inputStream);
-
-        //Penta sound
-        sound = new File("src/Audio/PentaKill.wav");
-        inputStream = AudioSystem.getAudioInputStream(sound);
-        Clip pentaKill = AudioSystem.getClip();
-        pentaKill.open(inputStream);
-
-
+    public void attack(Board Player, Settings settings, Scanner sc) throws UnsupportedAudioFileException, IOException, LineUnavailableException {
 
         int colnum = 0, row = 0;
         while(true) //Kiểm tra tọa độ nhập vào có hợp lệ
@@ -288,9 +239,9 @@ public class Ingame {
             System.out.println(ANSI_YELLOW + "Enter location: " + ANSI_RESET);
 
             String location = sc.nextLine();
-            choosingSound.setMicrosecondPosition(0);
-            choosingSound.stop();
-            choosingSound.start();
+            settings.choosingSound.setMicrosecondPosition(0);
+            settings.choosingSound.stop();
+            settings.choosingSound.start();
 
             location = location.toUpperCase();
             location = location.trim();
@@ -329,8 +280,8 @@ public class Ingame {
         if(Player.board[row][colnum] != 'o') //Bắn trúng đích
         {
             System.out.println(ANSI_GREEN + "TARGET DESTROYED!!" + ANSI_RESET);
-            hitSound.setMicrosecondPosition(0);
-            hitSound.start();
+            settings.hitSound.setMicrosecondPosition(0);
+            settings.hitSound.start();
             boolean checkShipAlive = false;
             int numberOfSquare = 0;
             if(Player.board[row][colnum] == 'P') numberOfSquare = 2;
@@ -353,24 +304,24 @@ public class Ingame {
                 Player.shipRemaining -= 1;
                 switch (Player.shipRemaining){
                     case 4:
-                        firstBlood.setMicrosecondPosition(0);
-                        firstBlood.start();
+                        settings.firstBlood.setMicrosecondPosition(0);
+                        settings.firstBlood.start();
                         break;
                     case 3:
-                        doubleKill.setMicrosecondPosition(0);
-                        doubleKill.start();
+                        settings.doubleKill.setMicrosecondPosition(0);
+                        settings.doubleKill.start();
                         break;
                     case 2:
-                        tripleKill.setMicrosecondPosition(0);
-                        tripleKill.start();
+                        settings.tripleKill.setMicrosecondPosition(0);
+                        settings.tripleKill.start();
                         break;
                     case 1:
-                        quadraKill.setMicrosecondPosition(0);
-                        quadraKill.start();
+                        settings.quadraKill.setMicrosecondPosition(0);
+                        settings.quadraKill.start();
                         break;
                     case 0:
-                        pentaKill.setMicrosecondPosition(0);
-                        pentaKill.start();
+                        settings.pentaKill.setMicrosecondPosition(0);
+                        settings.pentaKill.start();
                         break;
                 }
                 System.out.println(ANSI_CYAN + "ENEMY'S SHIP SUNK!!" + ANSI_RESET);
@@ -381,8 +332,8 @@ public class Ingame {
         else //Bắn trượt
         {
             System.out.println(ANSI_RED + "TARGET MISSED!!" + ANSI_RESET);
-            missSound.setMicrosecondPosition(0);
-            missSound.start();
+            settings.missSound.setMicrosecondPosition(0);
+            settings.missSound.start();
             Player.boardForOpponent[row][colnum] = 'm';
             Player.destroyedSquare += 1;
         }
@@ -391,49 +342,8 @@ public class Ingame {
         for(int i = 0; i < 50; i++) System.out.println();
     }
 
-    public void botAttack(Scanner sc, Board Player, Clip choosingSound) throws UnsupportedAudioFileException, IOException, LineUnavailableException {
+    public void botAttack(Board Player, Settings settings, Scanner sc) throws UnsupportedAudioFileException, IOException, LineUnavailableException {
 
-        //Hit sound
-        File sound = new File("src/Audio/Hit Sound.wav");
-        AudioInputStream inputStream = AudioSystem.getAudioInputStream(sound);
-        Clip hitSound = AudioSystem.getClip();
-        hitSound.open(inputStream);
-
-        //Miss sound
-        sound = new File("src/Audio/Miss Sound.wav");
-        inputStream = AudioSystem.getAudioInputStream(sound);
-        Clip missSound = AudioSystem.getClip();
-        missSound.open(inputStream);
-
-        //FirstBlood sound
-        sound = new File("src/Audio/FirstBlood.wav");
-        inputStream = AudioSystem.getAudioInputStream(sound);
-        Clip firstBlood = AudioSystem.getClip();
-        firstBlood.open(inputStream);
-
-        //DoubleKill sound
-        sound = new File("src/Audio/DoubleKill.wav");
-        inputStream = AudioSystem.getAudioInputStream(sound);
-        Clip doubleKill = AudioSystem.getClip();
-        doubleKill.open(inputStream);
-
-        //TripleKill sound
-        sound = new File("src/Audio/TripleKill.wav");
-        inputStream = AudioSystem.getAudioInputStream(sound);
-        Clip tripleKill = AudioSystem.getClip();
-        tripleKill.open(inputStream);
-
-        //QuadraKill sound
-        sound = new File("src/Audio/Quadra Kill - Sound Effect.wav");
-        inputStream = AudioSystem.getAudioInputStream(sound);
-        Clip quadraKill = AudioSystem.getClip();
-        quadraKill.open(inputStream);
-
-        //Penta sound
-        sound = new File("src/Audio/PentaKill.wav");
-        inputStream = AudioSystem.getAudioInputStream(sound);
-        Clip pentaKill = AudioSystem.getClip();
-        pentaKill.open(inputStream);
 
         Random generator = new Random();
         int row = 0, colnum = 0;
@@ -505,8 +415,8 @@ public class Ingame {
                 }
             }
             System.out.println(ANSI_GREEN + "TARGET DESTROYED!!" + ANSI_RESET);
-            hitSound.setMicrosecondPosition(0);
-            hitSound.start();
+            settings.hitSound.setMicrosecondPosition(0);
+            settings.hitSound.start();
             boolean checkShipAlive = false;
             int numberOfSquare = 0;
             if(Player.board[row][colnum] == 'P') numberOfSquare = 2;
@@ -580,24 +490,24 @@ public class Ingame {
                 Player.shipRemaining -= 1;
                 switch (Player.shipRemaining){
                     case 4:
-                        firstBlood.setMicrosecondPosition(0);
-                        firstBlood.start();
+                        settings.firstBlood.setMicrosecondPosition(0);
+                        settings.firstBlood.start();
                         break;
                     case 3:
-                        doubleKill.setMicrosecondPosition(0);
-                        doubleKill.start();
+                        settings.doubleKill.setMicrosecondPosition(0);
+                        settings.doubleKill.start();
                         break;
                     case 2:
-                        tripleKill.setMicrosecondPosition(0);
-                        tripleKill.start();
+                        settings.tripleKill.setMicrosecondPosition(0);
+                        settings.tripleKill.start();
                         break;
                     case 1:
-                        quadraKill.setMicrosecondPosition(0);
-                        quadraKill.start();
+                        settings.quadraKill.setMicrosecondPosition(0);
+                        settings.quadraKill.start();
                         break;
                     case 0:
-                        pentaKill.setMicrosecondPosition(0);
-                        pentaKill.start();
+                        settings.pentaKill.setMicrosecondPosition(0);
+                        settings.pentaKill.start();
                         break;
                 }
                 System.out.println(ANSI_CYAN + "ENEMY'S SHIP SUNK!!" + ANSI_RESET);
@@ -609,8 +519,8 @@ public class Ingame {
         {
             System.out.println(ANSI_RED + "TARGET MISSED!!" + ANSI_RESET);
             Player.boardForBot[row][colnum] = 2;
-            missSound.setMicrosecondPosition(0);
-            missSound.start();
+            settings.missSound.setMicrosecondPosition(0);
+            settings.missSound.start();
             Player.boardForOpponent[row][colnum] = 'm';
             Player.destroyedSquare += 1;
         }

@@ -6,14 +6,17 @@ import java.io.*;
 
 public class saveLoadFunction {
 
+    public static final String ANSI_RESET = "\u001B[0m";
+
+    public static final String ANSI_RED = "\u001B[31m";
+
     Board player;
     public saveLoadFunction(Board Player)
     {
         this.player = Player;
     }
 
-    public void save(String fileName)
-    {
+    public void save(String fileName) {
         try
         {
             ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File(fileName)));
@@ -30,9 +33,9 @@ public class saveLoadFunction {
             oos.writeObject(ds);
 
         }
-        catch(Exception ignored)
+        catch(NullPointerException | IOException e)
         {
-
+            System.out.println();
         }
     }
 
@@ -49,10 +52,11 @@ public class saveLoadFunction {
             player.destroyedSquare = ds.destroyedSquare;
             player.shipRemaining = ds.shipRemaining;
             player.playerTurn = ds.playerTurn;
-        }
-        catch(Exception ignored)
-        {
 
+        }
+        catch(NullPointerException | IOException | ClassNotFoundException e)
+        {
+            System.out.print("");
         }
     }
 }

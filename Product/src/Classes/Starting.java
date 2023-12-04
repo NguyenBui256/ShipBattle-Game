@@ -17,28 +17,22 @@ public class Starting{
     public static final String ANSI_CYAN = "\u001B[36m";
     public static final String ANSI_PURPLE = "\u001B[35m";
 
+    public static final String ANSI_BLUE = "\033[0;34m";
+
+    Settings settings = new Settings();
+
+    public Starting() throws UnsupportedAudioFileException, LineUnavailableException, IOException {
+    }
+
     public void startingActions(Board Player1, Board Player2) throws IOException, InterruptedException, UnsupportedAudioFileException, LineUnavailableException {
         Scanner sc = new Scanner(System.in);
 
-        //Background Music
-        File file = new File("src/Audio/Menu_Music.wav");
-        AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(file);
-        Clip bgMusic = AudioSystem.getClip();
-        bgMusic.open(audioInputStream);
-
-
-        //Choosing Sound
-        File sound = new File("src/Audio/Choosing sound.wav");
-        AudioInputStream inputStream = AudioSystem.getAudioInputStream(sound);
-        Clip choosingSound = AudioSystem.getClip();
-        choosingSound.open(inputStream);
-
-        FloatControl volumeControl = (FloatControl) choosingSound.getControl(FloatControl.Type.MASTER_GAIN);
-        volumeControl.setValue(6.0f);
+      FloatControl volumeControl = (FloatControl) settings.choosingSound.getControl(FloatControl.Type.MASTER_GAIN);
+      volumeControl.setValue(6.0f);
 
         while(true)
         {
-            bgMusic.loop(Clip.LOOP_CONTINUOUSLY);
+            if(settings.musicOn) settings.menuMusic.loop(Clip.LOOP_CONTINUOUSLY);
 
             System.out.print(ANSI_CYAN + "\n" +
                     " ________   ___  ___   ___   ________        ________   ________   _________   _________   ___        _______      \n" +
@@ -55,35 +49,43 @@ public class Starting{
             System.out.println(ANSI_YELLOW +"2.Load game" + ANSI_RESET);
             System.out.println(ANSI_PURPLE + "3.Leaderboard" + ANSI_RESET);
             System.out.println(ANSI_CYAN + "4.Rules" + ANSI_RESET);
-            System.out.println(ANSI_GREEN + "5.Exit" + ANSI_RESET);
+            System.out.println(ANSI_BLUE + "5.Setting" + ANSI_RESET);
+            System.out.println(ANSI_GREEN + "6.Exit" + ANSI_RESET);
             System.out.println("Enter your choice:");
             String option = sc.nextLine();
-            choosingSound.setMicrosecondPosition(0);
-            choosingSound.start();
+            settings.choosingSound.setMicrosecondPosition(0);
+            settings.choosingSound.start();
 
             switch (option){
                 case "1":
-                    System.out.println("Enter board size (8x8 -> 20x20):");
+                    System.out.println("Enter board size (From 8 -> 20):");
                     int boardSize = Integer.parseInt(sc.nextLine());
                     Player1 = new Board(boardSize);
                     Player2 = new Board(boardSize);
                     Player1.playerTurn = 1;
                     Player2.playerTurn = 0;
-                    bgMusic.stop();
-                    play(Player1, Player2, sc, choosingSound);
+                    play(Player1, Player2, settings, sc);
                     break;
                 case "2":
-                    bgMusic.stop();
-
-                    AudioInputStream backGroundMusic = AudioSystem.getAudioInputStream(new File("src/Audio/Ingame_Music.wav"));
-                    Clip bgIngameMusic = AudioSystem.getClip();
-                    bgIngameMusic.open(backGroundMusic);
-                    bgIngameMusic.loop(Clip.LOOP_CONTINUOUSLY);
-
-                    volumeControl = (FloatControl) bgIngameMusic.getControl(FloatControl.Type.MASTER_GAIN);
+                    settings.menuMusic.stop();
+                    volumeControl = (FloatControl) settings.ingameMusic.getControl(FloatControl.Type.MASTER_GAIN);
                     volumeControl.setValue(-5.0f);
+                    try
+                    {
+                        Player1.saveLoad.load("data1.dat");
+                        Player2.saveLoad.load("data2.dat");
+                    }
+                    catch (NullPointerException e)
+                    {
+                        System.out.println(ANSI_RED + "NO PREVIOUS DATA!" + ANSI_RESET);
+                        System.out.println("Press enter to continue:");
+                        sc.nextLine();
+                        break;
+                    }
 
-                    String message = ANSI_CYAN + "LOADING GAME...\n" + ANSI_RESET;
+                    System.out.println();
+                    String message = ANSI_CYAN + "LOADING GAME...\n\n" + ANSI_RESET;
+
                     char[] chars = message.toCharArray();
 
                     for(int i = 0; i < chars.length; i++)
@@ -92,33 +94,49 @@ public class Starting{
                         Thread.sleep(100);
                     }
 
-                    Player1.saveLoad.load("data1.dat");
-                    Player2.saveLoad.load("data2.dat");
-
                     Ingame ingame = new Ingame();
 
                     if(Player2.playerName.equals("Engine"))
                     {
-                        ingame.playWithBot(Player1, Player2, bgMusic, choosingSound, sc);
-                        bgIngameMusic.stop();
+                        ingame.playWithBot(Player1, Player2, settings, sc);
+                        settings.ingameMusic.stop();
                     }
                     else
                     {
-                        ingame.playWithPlayer(Player1, Player2, bgIngameMusic,choosingSound, sc);
-                        bgIngameMusic.stop();
+                        ingame.playWithPlayer(Player1, Player2, settings, sc);
+                        settings.ingameMusic.stop();
                     }
                     break;
                 case "3":
-                    bgMusic.stop();
-                    showLeaderBoard(sc);
+                    showLeaderBoard(sc, settings);
                     break;
                 case "4":
-                    bgMusic.stop();
-                    showRule(sc);
+                    showRule(sc, settings);
                     break;
                 case "5":
+                    System.out.println("1.Turn " + ANSI_GREEN + "ON" + ANSI_RESET + " background music");
+                    System.out.println("2.Turn " + ANSI_RED + "OFF" + ANSI_RESET + " background music");
+                    System.out.println("3.Return");
+
+                    option = sc.nextLine();
+                    if(option.equals("1")) {
+                        System.out.println(ANSI_GREEN + "MUSIC TURNED ON !\n" + ANSI_RESET);
+                        settings.musicOn = true;
+                        settings.menuMusic.setMicrosecondPosition(0);
+                        settings.menuMusic.start();
+                    }
+                    else if(option.equals("2"))
+                    {
+                        System.out.println(ANSI_RED + "MUSIC TURNED OFF !\n" + ANSI_RESET);
+                        settings.menuMusic.stop();
+                        settings.musicOn = false;
+                    }
+                    else if(option.equals("3")) break;
+                    else System.out.println(ANSI_RED + "Invalid option" + ANSI_RESET);
+                    break;
+                case "6":
                     System.out.println(ANSI_YELLOW + "Goodbye!!" + ANSI_RESET);
-                    bgMusic.stop();
+                    settings.menuMusic.stop();
                     return;
                 default:
                     System.out.println("Invalid option");
@@ -127,24 +145,30 @@ public class Starting{
         }
     }
 
-    public void play(Board Player1, Board Player2, Scanner sc, Clip choosingSound) throws IOException, InterruptedException, UnsupportedAudioFileException, LineUnavailableException {
+    public void play(Board Player1, Board Player2, Settings settings, Scanner sc) throws IOException, InterruptedException, UnsupportedAudioFileException, LineUnavailableException {
 
-        //Background Music
-        AudioInputStream backGroundMusic = AudioSystem.getAudioInputStream(new File("C:\\Users\\buiph\\IdeaProjects\\BattleShip\\src\\Audio\\Ingame_Music.wav"));
-        Clip bgMusic = AudioSystem.getClip();
-        bgMusic.open(backGroundMusic);
-        bgMusic.loop(Clip.LOOP_CONTINUOUSLY);
+        settings.menuMusic.stop();
+        if(settings.musicOn) settings.ingameMusic.loop(Clip.LOOP_CONTINUOUSLY);
 
-        FloatControl volumeControl = (FloatControl) bgMusic.getControl(FloatControl.Type.MASTER_GAIN);
+        FloatControl volumeControl = (FloatControl) settings.ingameMusic.getControl(FloatControl.Type.MASTER_GAIN);
         volumeControl.setValue(-5.0f);
 
         Ingame ingame = new Ingame();
 
-        System.out.println(ANSI_YELLOW + "Playmode:" + ANSI_RESET);
-        System.out.println("1." + ANSI_CYAN + " Player " + ANSI_RESET + "vs " + ANSI_CYAN + "Player" + ANSI_RESET);
-        System.out.println("2." + ANSI_CYAN + " Player " + ANSI_RESET + "vs " + ANSI_RED + " Bot" + ANSI_RESET);
-        System.out.println("Enter your choice:");
-        switch(sc.nextLine())
+        String option = null;
+        while(true)
+        {
+
+            System.out.println(ANSI_YELLOW + "Playmode:" + ANSI_RESET);
+            System.out.println("1." + ANSI_CYAN + " Player " + ANSI_RESET + "vs " + ANSI_CYAN + "Player" + ANSI_RESET);
+            System.out.println("2." + ANSI_CYAN + " Player " + ANSI_RESET + "vs " + ANSI_RED + " Bot" + ANSI_RESET);
+            System.out.println("3. Setting");
+            System.out.println("Enter your choice:");
+            option = sc.nextLine();
+            if(option.equals("1") || option.equals("2") || option.equals("3")) break;
+            else System.out.println(ANSI_RED + "Invalid option" + ANSI_RESET);
+        }
+        switch(option)
         {
             case "1":
                 while(true)
@@ -152,8 +176,8 @@ public class Starting{
                     boolean legitName = true;
                     System.out.println("Enter first player's name:");
                     Player1.playerName = sc.nextLine();
-                    choosingSound.setMicrosecondPosition(0);
-                    choosingSound.start();
+                    settings.choosingSound.setMicrosecondPosition(0);
+                    settings.choosingSound.start();
 
                     String check = Player1.playerName.toLowerCase().trim();
                     if(check.equals("engine")) legitName = false;
@@ -166,8 +190,8 @@ public class Starting{
 
                     System.out.println("Enter second player's name:");
                     Player2.playerName = sc.nextLine();
-                    choosingSound.setMicrosecondPosition(0);
-                    choosingSound.start();
+                    settings.choosingSound.setMicrosecondPosition(0);
+                    settings.choosingSound.start();
                     check = Player2.playerName.toLowerCase().trim();
                     if(check.equals("engine")) legitName = false;
 
@@ -185,8 +209,8 @@ public class Starting{
                 switch(sc.nextLine())
                 {
                     case "1":
-                        choosingSound.setMicrosecondPosition(0);
-                        choosingSound.start();
+                        settings.choosingSound.setMicrosecondPosition(0);
+                        settings.choosingSound.start();
                         autoPlacement(sc, Player1);
                         Player1.show();
                         System.out.println("Press Enter to continue: (Clear screen)");
@@ -194,10 +218,9 @@ public class Starting{
                         for (int i = 0; i < 50; ++i) System.out.println();
                         break;
                     case "2":
-                        choosingSound.setMicrosecondPosition(0);
-                        choosingSound.start();
-//                        Player2.show();
-                        shipPlacement(sc,Player1,choosingSound);
+                        settings.choosingSound.setMicrosecondPosition(0);
+                        settings.choosingSound.start();
+                        shipPlacement(sc,Player1,settings);
                         break;
                 }
 
@@ -210,9 +233,8 @@ public class Starting{
                 switch(sc.nextLine())
                 {
                     case "1":
-                        choosingSound.setMicrosecondPosition(0);
-                        choosingSound.stop();
-                        choosingSound.start();
+                        settings.choosingSound.setMicrosecondPosition(0);
+                        settings.choosingSound.start();
                         autoPlacement(sc, Player2);
                         Player2.show();
                         System.out.println("Press Enter to continue: (Clear screen)");
@@ -220,28 +242,26 @@ public class Starting{
                         for (int i = 0; i < 50; ++i) System.out.println();
                         break;
                     case "2":
-                        choosingSound.setMicrosecondPosition(0);
-                        choosingSound.stop();
-                        choosingSound.start();
-                        shipPlacement(sc,Player2, choosingSound);
+                        settings.choosingSound.setMicrosecondPosition(0);
+                        settings.choosingSound.start();
+                        shipPlacement(sc,Player2, settings);
                         break;
                 }
-                ingame.playWithPlayer(Player1, Player2, bgMusic,choosingSound,sc);
+                ingame.playWithPlayer(Player1, Player2, settings ,sc);
                 break;
             case "2":
                 while(true)
                 {
                     System.out.println("Enter player's name:");
                     Player1.playerName = sc.nextLine();
-                    choosingSound.setMicrosecondPosition(0);
-                    choosingSound.start();
+                    settings.choosingSound.setMicrosecondPosition(0);
+                    settings.choosingSound.start();
 
                     if(Player1.playerName.toLowerCase().trim().equals("engine")) System.out.println(ANSI_RED + "Invalid name, try another" + ANSI_RESET);
                     else break;
                 }
-                choosingSound.setMicrosecondPosition(0);
-                choosingSound.stop();
-                choosingSound.start();
+                settings.choosingSound.setMicrosecondPosition(0);
+                settings.choosingSound.start();
                 System.out.println(ANSI_RED + Player1.playerName + ANSI_RESET + " ships placement:");
                 Player1.show();
                 System.out.println("Fill options:");
@@ -250,9 +270,8 @@ public class Starting{
                 switch(sc.nextLine())
                 {
                     case "1":
-                        choosingSound.setMicrosecondPosition(0);
-                        choosingSound.stop();
-                        choosingSound.start();
+                        settings.choosingSound.setMicrosecondPosition(0);
+                        settings.choosingSound.start();
                         autoPlacement(sc, Player1);
                         Player1.show();
                         System.out.println("Press Enter to continue: (Clear screen)");
@@ -260,39 +279,63 @@ public class Starting{
                         for (int i = 0; i < 50; ++i) System.out.println();
                         break;
                     case "2":
-                        choosingSound.setMicrosecondPosition(0);
-                        choosingSound.stop();
-                        choosingSound.start();
-                        shipPlacement(sc,Player1,choosingSound);
+                        settings.choosingSound.setMicrosecondPosition(0);
+                        settings.choosingSound.start();
+                        shipPlacement(sc,Player1,settings);
                         break;
                 }
                 Player2.playerName = "Engine";
                 autoPlacement(sc, Player2);
                 Player1.playerTurn = 1;
                 Player2.playerTurn = 0;
-                ingame.playWithBot(Player1, Player2, bgMusic, choosingSound, sc);
+                ingame.playWithBot(Player1, Player2, settings, sc);
+                break;
+            case "3":
+                while(true)
+                {
+                    System.out.println("1.Turn " + ANSI_GREEN + "ON" + ANSI_RESET + " background music.");
+                    System.out.println("2.Turn " + ANSI_RED + "OFF" + ANSI_RESET + " background music.");
+                    System.out.println("3.Return.");
+                    System.out.println("Enter your choice:");
+                    option = sc.nextLine();
+                    if(option.equals("1")) {
+                        System.out.println(ANSI_GREEN + "MUSIC TURNED ON !\n" + ANSI_RESET);
+                        settings.musicOn = true;
+                        settings.ingameMusic.setMicrosecondPosition(0);
+                        settings.ingameMusic.start();
+                    }
+                    else if(option.equals("2"))
+                    {
+                        System.out.println(ANSI_RED + "MUSIC TURNED OFF !\n" + ANSI_RESET);
+                        settings.musicOn = false;
+                        settings.ingameMusic.stop();
+                    }
+                    else if(option.equals("3")) break;
+                    else System.out.println(ANSI_RED + "Invalid option" + ANSI_RESET);
+                }
+                play(Player1, Player2, settings, sc);
                 break;
         }
 
 
-    }
+     }
 
-    public void shipPlacement(Scanner sc, Board Player, Clip choosingSound)
+    public void shipPlacement(Scanner sc, Board Player, Settings settings)
     {
         System.out.println("Placing first Patrol Boat: 2 squares");
-        placingShip(sc, 'P', Player, choosingSound);
+        placingShip(sc, 'P', Player, settings);
         Player.show();
         System.out.println("Placing second Patrol Boat: 2 squares");
-        placingShip(sc, 'P', Player, choosingSound);
+        placingShip(sc, 'P', Player, settings);
         Player.show();
         System.out.println("Placing Destroyer Boat: 4 squares");
-        placingShip(sc, 'D', Player, choosingSound);
+        placingShip(sc, 'D', Player, settings);
         Player.show();
         System.out.println("Placing Submarine: 3 squares");
-        placingShip(sc, 'S', Player, choosingSound);
+        placingShip(sc, 'S', Player, settings);
         Player.show();
         System.out.println("Placing Battle Ship: 5 squares");
-        placingShip(sc, 'B', Player, choosingSound);
+        placingShip(sc, 'B', Player, settings);
         Player.show();
 
         System.out.println("Press Enter to continue: (Clear screen)");
@@ -300,7 +343,7 @@ public class Starting{
         for (int i = 0; i < 50; ++i) System.out.println();
     }
 
-    public void placingShip(Scanner sc, char typeOfShip, Board Player, Clip choosingSound)
+    public void placingShip(Scanner sc, char typeOfShip, Board Player, Settings settings)
     {
         int colnum = 0, row = 0;
         while(true) //Kiểm tra tọa độ nhập vào có hợp lệ
@@ -309,9 +352,9 @@ public class Starting{
             System.out.println(ANSI_YELLOW + "Enter location: " + ANSI_RESET);
 
             String location = sc.nextLine();
-            choosingSound.setMicrosecondPosition(0);
-            choosingSound.stop();
-            choosingSound.start();
+            settings.choosingSound.setMicrosecondPosition(0);
+            settings.choosingSound.stop();
+            settings.choosingSound.start();
 
             location = location.toUpperCase();
             location = location.trim();
@@ -361,9 +404,9 @@ public class Starting{
             {
                 System.out.println("Choose direction (Type in text): ");
                 choice = sc.nextLine();
-                choosingSound.setMicrosecondPosition(0);
-                choosingSound.stop();
-                choosingSound.start();
+                settings.choosingSound.setMicrosecondPosition(0);
+                settings.choosingSound.stop();
+                settings.choosingSound.start();
                 choice = choice.toLowerCase();
                 if(choice.equals("up") || choice.equals("down") || choice.equals("left") || choice.equals("right")) break;
             }
@@ -530,16 +573,13 @@ public class Starting{
         }
     }
 
-    public void showLeaderBoard(Scanner sc) throws UnsupportedAudioFileException, IOException, LineUnavailableException {
-
-        //Music
-        File sound = new File("src/Audio/WinningMusic.wav");
-        AudioInputStream inputStream = AudioSystem.getAudioInputStream(sound);
-        Clip bgMusic = AudioSystem.getClip();
-        bgMusic.open(inputStream);
-        bgMusic.setMicrosecondPosition(0);
-        bgMusic.start();
-
+    public void showLeaderBoard(Scanner sc, Settings settings) throws UnsupportedAudioFileException, IOException, LineUnavailableException {
+        settings.menuMusic.stop();
+        if(settings.musicOn)
+        {
+            settings.endSound.setMicrosecondPosition(0);
+            settings.endSound.start();
+        }
         Scanner input;
         List<Leader> list = new ArrayList<>();
         try{
@@ -578,18 +618,16 @@ public class Starting{
         System.out.println("Press enter to continue");
         sc.nextLine();
         for(int i = 0; i < 50; i++) System.out.println();
-        bgMusic.stop();
+        settings.endSound.stop();
     }
 
-    public void showRule(Scanner sc) throws UnsupportedAudioFileException, IOException, LineUnavailableException {
-        //Music
-        File sound = new File("src/Audio/WinningMusic.wav");
-        AudioInputStream inputStream = AudioSystem.getAudioInputStream(sound);
-        Clip bgMusic = AudioSystem.getClip();
-        bgMusic.open(inputStream);
-        bgMusic.setMicrosecondPosition(0);
-        bgMusic.start();
-
+    public void showRule(Scanner sc, Settings settings) throws UnsupportedAudioFileException, IOException, LineUnavailableException {
+        settings.menuMusic.stop();
+        if(settings.musicOn)
+        {
+            settings.endSound.setMicrosecondPosition(0);
+            settings.endSound.start();
+        }
         System.out.println(ANSI_RED + "* Sea Battle is a game for two players.\n* The game is played on four grids, two for each player.\n" +
                 "* The grids are typically square – usually 10×10 – and the individual squares in the grid are identified by letter and number.\n" +
                 "* On one grid the player arranges ships and records the shots by the opponent.\n" +
@@ -607,8 +645,9 @@ public class Starting{
         System.out.println("Press enter to continue");
         sc.nextLine();
         for (int i = 0 ; i < 50; i++) System.out.println();
-        bgMusic.stop();
+        settings.endSound.stop();
     }
+
 
 
 }

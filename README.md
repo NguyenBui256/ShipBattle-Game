@@ -18,7 +18,7 @@ The project was done by [Bùi Thế Vĩnh Nguyên](https://github.com/naa-ntu), 
 
 ## Demo
 
-### **Gameplay video:** https://youtu.be/YQpjQqdZBkE
+### **Gameplay video:** https://youtu.be/H-fcIXAx39A
 ### **Images**:
 
 ![Alt text](image1.png)

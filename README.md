@@ -42,6 +42,7 @@ The project was done by [Bùi Thế Vĩnh Nguyên](https://github.com/naa-ntu), 
 │   │   │   ├── Starting.java
 │   │   │   ├── Leader.java
 │   │   │   ├── Board.java
+│   │   │   ├── Settings.java
 │   ├── Data
 │   │   │   ├── saveLoadFunction.java
 │   │   │   ├── leaderBoard.txt
